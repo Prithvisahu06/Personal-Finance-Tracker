@@ -1,42 +1,36 @@
-# Personal Finance Tracker 📊
+# 💰 Personal Finance Tracker
 
-A simple yet powerful command-line tool built with Python to help you manage your personal finances. Track your income and expenses, set savings goals, and get a clear overview of your financial health.
-
----
-
-## ✨ Key Features
-
-* **Track Transactions**: Easily add income and expense records with details like amount, category, and description.
-* **Financial Summary**: Get an instant summary of your total income, total expenses, and current balance.
-* **Savings Goals**: Set financial goals and track your progress towards achieving them.
-* **View & Sort**: Display all transactions, automatically sorted by the most recent date.
-* **Filter & Search**: Quickly find specific transactions by filtering based on amount, category, or type (income/expense).
-* **Monthly Spending Chart**: Visualize your monthly spending for the current year with a clean ASCII bar chart.
-* **Data Persistence**: Your financial data is automatically saved to a `finance_data.json` file, so you never lose your records.
+## 📌 Overview
+A **command-line personal finance tracker** to record income, expenses, and savings goals.  
+Built as a **Data Structures** project using arrays of structures (Python lists of dictionaries).  
+Supports **sorting, searching, filtering, file storage**, and even **ASCII bar charts** for monthly spending.
 
 ---
 
-## 🚀 How to Use
-
-1.  **Prerequisites**: Make sure you have Python 3 installed on your system.
-2.  **Clone the Repository**:
-    ```bash
-    git clone <your-repository-url>
-    ```
-3.  **Navigate to the Directory**:
-    ```bash
-    cd <repository-folder-name>
-    ```
-4.  **Run the Script**:
-    ```bash
-    python finance_tracker.py
-    ```
-5.  **Follow the Menu**: Once the script is running, use the on-screen menu to navigate and manage your finances. Your data will be saved automatically when you exit.
+## 🛠 Features
+- Add transactions (income or expenses)
+- View all transactions
+- Search transactions by keyword
+- Filter expenses over a certain amount
+- Sort transactions by date
+- View monthly spending in ASCII chart format
+- Save & load transactions from file
 
 ---
 
-## 🛠️ Built With
+## 📂 Data Structures Used
+- **Array of structures** → List of dictionaries in Python
+- **Sorting** → Custom sort by date
+- **Searching** → Linear search with keyword match
+- **Filtering** → Conditional filtering with list comprehension
 
-* **Python 3**
-* Standard Libraries: `json` (for data storage) and `datetime` (for timestamps).
+---
 
+## 🚀 How to Run
+```bash
+# Clone repository
+git clone https://github.com/your-username/personal-finance-tracker.git
+cd personal-finance-tracker/src
+
+# Run the program
+python finance_tracker.py
