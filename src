@@ -1,140 +1,285 @@
-import os
 import json
 from datetime import datetime
 
-# Structure-like data: using dictionary for each transaction
-transactions = []  # This acts like an "array of structures"
-DATA_FILE = os.path.join("data", "transactions.txt")
+# --- Constants ---
+DATA_FILE = 'finance_data.json'
+
+# --- Data Handling Functions ---
+
+def load_data(filename=DATA_FILE):
+    """
+    Loads financial data from a JSON file.
+    If the file doesn't exist, it returns a default data structure.
+    """
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Return a default structure if the file is missing or empty
+        return {"transactions": [], "savings_goals": {}}
+
+def save_data(data, filename=DATA_FILE):
+    """
+    Saves the financial data to a JSON file.
+    """
+    try:
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        print("\n✅ Data saved successfully!")
+    except IOError as e:
+        print(f"\n❌ Error saving data: {e}")
+
+# --- Core Functionality ---
+
+def add_transaction(data, transaction_type):
+    """
+    Adds a new income or expense transaction.
+    """
+    print(f"\n--- Add New {transaction_type.capitalize()} ---")
+    try:
+        amount = float(input("Enter amount: $"))
+        if amount <= 0:
+            print("❌ Amount must be positive.")
+            return
+
+        category = input(f"Enter {transaction_type} category (e.g., Salary, Groceries): ")
+        description = input("Enter a brief description (optional): ")
+        # Automatically use today's date in a standard format
+        date = datetime.now().strftime('%Y-%m-%d')
+
+        transaction = {
+            "type": transaction_type,
+            "amount": amount,
+            "category": category.strip(),
+            "description": description.strip(),
+            "date": date
+        }
+
+        data["transactions"].append(transaction)
+        print(f"\n✅ {transaction_type.capitalize()} of ${amount:.2f} added successfully.")
+
+    except ValueError:
+        print("\n❌ Invalid amount. Please enter a number.")
+    except Exception as e:
+        print(f"\n❌ An unexpected error occurred: {e}")
 
 
-# ------------------------------
-# Core Functions
-# ------------------------------
-def add_transaction():
-    date_str = input("Enter date (YYYY-MM-DD): ")
-    category = input("Enter category (Income/Expense): ").capitalize()
-    description = input("Enter description: ")
-    amount = float(input("Enter amount: "))
+def set_savings_goal(data):
+    """
+    Sets or updates a savings goal.
+    """
+    print("\n--- Set a Savings Goal ---")
+    try:
+        goal_name = input("What are you saving for? (e.g., Vacation, New Car): ")
+        target_amount = float(input(f"What is the target amount for '{goal_name}'? $"))
 
-    transaction = {
-        "date": date_str,
-        "category": category,
-        "description": description,
-        "amount": amount
-    }
-    transactions.append(transaction)
-    print("✅ Transaction added!")
+        if target_amount <= 0:
+            print("❌ Target amount must be positive.")
+            return
+
+        data["savings_goals"][goal_name] = {"target": target_amount}
+        print(f"\n✅ Savings goal '{goal_name}' for ${target_amount:.2f} set!")
+
+    except ValueError:
+        print("\n❌ Invalid amount. Please enter a number.")
 
 
-def view_transactions():
+# --- Data Viewing and Analysis ---
+
+def view_transactions(transactions):
+    """
+    Displays all transactions, sorted by date.
+    """
     if not transactions:
-        print("⚠ No transactions recorded.")
-        return
-    print("\n--- Transaction List ---")
-    for t in transactions:
-        print(f"{t['date']} | {t['category']} | {t['description']} | ${t['amount']:.2f}")
-
-
-def search_transactions():
-    keyword = input("Enter keyword to search: ").lower()
-    results = [t for t in transactions if keyword in t['description'].lower()]
-    if results:
-        print("\n--- Search Results ---")
-        for t in results:
-            print(f"{t['date']} | {t['category']} | {t['description']} | ${t['amount']:.2f}")
-    else:
-        print("⚠ No matching transactions found.")
-
-
-def filter_expenses_over():
-    threshold = float(input("Show expenses over: $"))
-    results = [t for t in transactions if t['category'] == "Expense" and t['amount'] > threshold]
-    if results:
-        print(f"\n--- Expenses over ${threshold} ---")
-        for t in results:
-            print(f"{t['date']} | {t['description']} | ${t['amount']:.2f}")
-    else:
-        print("⚠ No expenses found above that amount.")
-
-
-def sort_transactions():
-    transactions.sort(key=lambda x: datetime.strptime(x['date'], "%Y-%m-%d"))
-    print("✅ Transactions sorted by date.")
-
-
-# ------------------------------
-# File Handling
-# ------------------------------
-def save_data():
-    os.makedirs("data", exist_ok=True)
-    with open(DATA_FILE, "w") as f:
-        json.dump(transactions, f)
-    print("💾 Data saved successfully!")
-
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            loaded = json.load(f)
-            transactions.extend(loaded)
-        print("📂 Data loaded successfully!")
-
-
-# ------------------------------
-# ASCII Graph
-# ------------------------------
-def monthly_spending_chart():
-    spending = {}
-    for t in transactions:
-        if t['category'] == "Expense":
-            month = t['date'][:7]  # YYYY-MM
-            spending[month] = spending.get(month, 0) + t['amount']
-
-    if not spending:
-        print("⚠ No expenses to display.")
+        print("\nNo transactions yet. Start by adding some!")
         return
 
-    print("\n--- Monthly Spending Chart ---")
-    for month, total in spending.items():
-        bar = "#" * int(total // 10)  # Scale: $10 = 1 #
-        print(f"{month}: {bar} (${total:.2f})")
+    # Sort transactions by date in descending order (most recent first)
+    sorted_transactions = sorted(transactions, key=lambda x: x['date'], reverse=True)
+
+    print("\n--- All Transactions ---")
+    print(f"{'Date':<12} | {'Type':<10} | {'Amount':<12} | {'Category':<20} | {'Description'}")
+    print("-" * 80)
+    for t in sorted_transactions:
+        amount_str = f"${t['amount']:.2f}"
+        print(f"{t['date']:<12} | {t['type'].capitalize():<10} | {amount_str:<12} | {t['category']:<20} | {t['description']}")
+    print("-" * 80)
 
 
-# ------------------------------
-# Main Menu
-# ------------------------------
+def view_summary(data):
+    """
+    Calculates and displays a summary of income, expenses, balance, and savings goals.
+    """
+    transactions = data["transactions"]
+    if not transactions:
+        print("\nNo data for summary. Add some transactions first.")
+        return
+
+    total_income = sum(t['amount'] for t in transactions if t['type'] == 'income')
+    total_expenses = sum(t['amount'] for t in transactions if t['type'] == 'expense')
+    balance = total_income - total_expenses
+
+    print("\n--- Financial Summary ---")
+    print(f"Total Income:   ${total_income:10.2f}")
+    print(f"Total Expenses: ${total_expenses:10.2f}")
+    print("-------------------------")
+    print(f"Current Balance:  ${balance:10.2f}")
+    print("-------------------------")
+
+    # Savings Goal Progress
+    if data["savings_goals"]:
+        print("\n--- Savings Goal Progress ---")
+        for goal, details in data["savings_goals"].items():
+            target = details["target"]
+            progress = (balance / target) * 100 if target > 0 else 0
+            progress = min(progress, 100) # Cap progress at 100%
+            print(f"Goal '{goal}': ${balance:.2f} / ${target:.2f} ({progress:.2f}%)")
+    else:
+        print("\nNo savings goals set.")
+
+
+def filter_transactions(transactions):
+    """
+    Allows users to filter transactions based on criteria.
+    """
+    if not transactions:
+        print("\nNo transactions to filter.")
+        return
+
+    print("\n--- Filter Transactions ---")
+    print("Filter by:")
+    print("1. Amount (greater than)")
+    print("2. Category")
+    print("3. Type (income/expense)")
+    choice = input("Enter your choice: ")
+
+    filtered_list = []
+    if choice == '1':
+        try:
+            min_amount = float(input("Enter minimum amount to filter by: $"))
+            filtered_list = [t for t in transactions if t['amount'] > min_amount]
+        except ValueError:
+            print("❌ Invalid amount.")
+            return
+    elif choice == '2':
+        category = input("Enter category to filter by: ").strip().lower()
+        filtered_list = [t for t in transactions if t['category'].lower() == category]
+    elif choice == '3':
+        type_filter = input("Enter type (income/expense) to filter by: ").strip().lower()
+        if type_filter in ['income', 'expense']:
+            filtered_list = [t for t in transactions if t['type'] == type_filter]
+        else:
+            print("❌ Invalid type. Please enter 'income' or 'expense'.")
+            return
+    else:
+        print("❌ Invalid choice.")
+        return
+
+    if filtered_list:
+        print("\n--- Filtered Results ---")
+        view_transactions(filtered_list)
+    else:
+        print("\nNo transactions match your filter criteria.")
+
+# --- Bonus: ASCII Chart ---
+
+def display_monthly_spending_chart(transactions):
+    """
+    Generates and displays an ASCII bar chart of monthly expenses for the current year.
+    """
+    # Added a try-except block to gracefully handle any unexpected errors during chart generation.
+    try:
+        expenses = [t for t in transactions if t['type'] == 'expense']
+        if not expenses:
+            print("\nNo expense data to generate a chart.")
+            return
+
+        monthly_spending = {}
+        current_year = datetime.now().year
+
+        for t in expenses:
+            # Parse date and check if it's in the current year
+            transaction_date = datetime.strptime(t['date'], '%Y-%m-%d')
+            if transaction_date.year == current_year:
+                month_name = transaction_date.strftime('%b')  # e.g., 'Jan', 'Feb'
+                monthly_spending[month_name] = monthly_spending.get(month_name, 0) + t['amount']
+
+        if not monthly_spending:
+            print(f"\nNo expenses recorded for the current year ({current_year}).")
+            return
+
+        print(f"\n--- Monthly Spending Chart ({current_year}) ---")
+
+        # Find the max spending to scale the chart
+        max_spending = max(monthly_spending.values())
+        scale = 50 / max_spending if max_spending > 0 else 0
+
+        # Ensure all months are present for ordering
+        months_in_order = [datetime(current_year, i, 1).strftime('%b') for i in range(1, 13)]
+        for month in months_in_order:
+            # Use .get() for safer dictionary access
+            spending = monthly_spending.get(month, 0)
+            if spending > 0:
+                # Create the bar for the chart
+                bar = '#' * int(spending * scale)
+                print(f"{month:<4} | {bar} ${spending:.2f}")
+            else:
+                # Print the month with no bar if there was no spending
+                print(f"{month:<4} |")
+
+    except Exception as e:
+        print(f"\n❌ An unexpected error occurred while generating the chart: {e}")
+        print("This could be due to corrupted data in your finance_data.json file.")
+
+
+# --- Main Application Logic ---
+
+def print_menu():
+    """Prints the main menu options."""
+    print("\n===== Personal Finance Tracker =====")
+    print("1. Add Income")
+    print("2. Add Expense")
+    print("3. View All Transactions")
+    print("4. View Financial Summary")
+    print("5. Filter Transactions")
+    print("6. Set/Update Savings Goal")
+    print("7. View Monthly Spending Chart")
+    print("8. Save Data")
+    print("9. Exit")
+    print("==================================")
+
 def main():
-    load_data()
-    while True:
-        print("\n📌 Personal Finance Tracker")
-        print("1. Add Transaction")
-        print("2. View Transactions")
-        print("3. Search Transactions")
-        print("4. Filter Expenses Over Amount")
-        print("5. Sort Transactions by Date")
-        print("6. Monthly Spending Chart")
-        print("7. Save & Exit")
+    """Main function to run the application."""
+    data = load_data()
 
-        choice = input("Choose an option: ")
-        if choice == "1":
-            add_transaction()
-        elif choice == "2":
-            view_transactions()
-        elif choice == "3":
-            search_transactions()
-        elif choice == "4":
-            filter_expenses_over()
-        elif choice == "5":
-            sort_transactions()
-        elif choice == "6":
-            monthly_spending_chart()
-        elif choice == "7":
-            save_data()
-            print("👋 Goodbye!")
+    while True:
+        print_menu()
+        choice = input("Enter your choice (1-9): ")
+
+        if choice == '1':
+            add_transaction(data, 'income')
+        elif choice == '2':
+            add_transaction(data, 'expense')
+        elif choice == '3':
+            view_transactions(data['transactions'])
+        elif choice == '4':
+            view_summary(data)
+        elif choice == '5':
+            filter_transactions(data['transactions'])
+        elif choice == '6':
+            set_savings_goal(data)
+        elif choice == '7':
+            display_monthly_spending_chart(data['transactions'])
+        elif choice == '8':
+            save_data(data)
+        elif choice == '9':
+            # Ask to save before exiting if there are unsaved changes
+            # For simplicity, we'll just save every time on exit.
+            save_data(data)
+            print("\nGoodbye! Your data has been saved.")
             break
         else:
-            print("⚠ Invalid choice, try again.")
-
+            print("\n❌ Invalid choice. Please enter a number between 1 and 9.")
 
 if __name__ == "__main__":
     main()
